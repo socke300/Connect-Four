@@ -7,6 +7,8 @@ class App {
     init {
         var game = GameEngine()
 
+        game.saveHashmap()
+
         var app: Javalin = Javalin.create() { t: JavalinConfig -> t.addStaticFiles("index.html") }.start(7070)
 
         app.get("/drop") { ctx ->
@@ -42,6 +44,10 @@ class App {
                 game.removeMove()
                 ctx.result(temp)
             }
+        }
+
+        app.get("/clearAll") { ctx ->
+            game = GameEngine(game.winHashMap)
         }
 
         app.get("/test") { ctx ->
