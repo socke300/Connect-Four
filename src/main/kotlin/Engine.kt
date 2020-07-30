@@ -1,5 +1,4 @@
 interface Engine {
-
     fun calculateBestMoveLight(): Int
     fun calculateBestMoveMedium(): Int
     fun calculateBestMoveHard(): Int
@@ -11,5 +10,4 @@ interface Engine {
     fun generatePossibleMoves(): ArrayList<Int>
     fun max(tiefe: Int, alpha: Int, beta: Int, bitboard: Long): Int
     fun min(tiefe: Int, alpha: Int, beta: Int, bitboard: Long): Int
-    override fun toString(): String
 }

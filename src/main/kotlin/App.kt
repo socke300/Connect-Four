@@ -1,15 +1,15 @@
 import io.javalin.Javalin
 import io.javalin.core.JavalinConfig
-import java.math.RoundingMode
-import java.text.DecimalFormat
+import kotlin.system.measureTimeMillis
 
 class App {
     init {
         var game = GameEngine()
+        //game.giveHashmap()
 
-        game.saveHashmap()
+        //game.generateHashmap()
 
-        var app: Javalin = Javalin.create() { t: JavalinConfig -> t.addStaticFiles("index.html") }.start(7070)
+        var app: Javalin = Javalin.create() { t: JavalinConfig -> t.addStaticFiles("public/index.html") }.start(7070)
 
         app.get("/drop") { ctx ->
             var temp = game.height[ctx.queryParam("id")!!.toInt()]
@@ -23,18 +23,16 @@ class App {
         }
 
         app.get("/computerTurn") { ctx ->
-            if (ctx.queryParam("id")!!.toInt() == 1) {
-                game.calculateBestMoveLight()
+            var temp = 0
+            var time = measureTimeMillis {
+                game.calculateBestMove()
+                temp = game.height[game.savedMove]
+                game.makeMove(game.savedMove)
             }
-            if (ctx.queryParam("id")!!.toInt() == 2) {
-                game.calculateBestMoveMedium()
-            }
-            var temp = game.height[game.savedMove]
-            game.makeMove(game.savedMove)
             if (game.givePlayer())
-                ctx.result("$temp,#4CAF50")
+                ctx.result("$temp,#4CAF50,$time")
             else
-                ctx.result("$temp,#f50000")
+                ctx.result("$temp,#f50000,$time")
 
         }
 
@@ -51,6 +49,94 @@ class App {
         }
 
         app.get("/test") { ctx ->
+            var tempString = ""
+            if (ctx.queryParam("id")!!.toInt() == 1) {
+                var game2 = GameEngine(game.winHashMap)
+                game2.makeMove(0)
+                game2.makeMove(2)
+                game2.makeMove(0)
+                game2.makeMove(3)
+                game2.makeMove(0)
+                game2.makeMove(3)
+                print("\n\n- Test 1: Start -\nAusgangssituation: \n---------\n|.......|\n|.......|\n|.......|\n|O......|\n|O..X...|\n|O.XX...|\n---------\nEngine (X) macht den Besten Zug, in Reihe: " + (game2.calculateBestMove() + 1) + ", da er dann Gewonnen hat.\nGewonnen 0: ")
+                game2.makeMove(game2.calculateBestMove())
+                print("" + game2.isWin(game2.bitBoardPlayerO) + "\n- Test 1: Ende -\n")
+            }
+            if (ctx.queryParam("id")!!.toInt() == 2) {
+                var game2 = GameEngine(game.winHashMap)
+                game2.makeMove(0)
+                game2.makeMove(1)
+                game2.makeMove(1)
+                game2.makeMove(2)
+                game2.makeMove(3)
+                game2.makeMove(2)
+                game2.makeMove(1)
+                game2.makeMove(0)
+                game2.makeMove(0)
+                game2.makeMove(3)
+                print("\n\n- Test 2: Start -\nAusgangssituation: \n---------\n|.......|\n|.......|\n|.......|\n|OO.....|\n|XOXX...|\n|OXXO...|\n---------" + "\nEngine (X) macht den Besten Zug, in Reihe: " + (game2.calculateBestMove() + 1) + ", da er dann nach 2 weiteren abwechselnden Zügen Gewonnen hat.\nGewonnen O: ")
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                print(""+ game2.isWin(game2.bitBoardPlayerO) + "\n- Test 2: Ende -\n")
+
+            }
+            if (ctx.queryParam("id")!!.toInt() == 3) {
+                var game2 = GameEngine(game.winHashMap)
+                game2.makeMove(0)
+                game2.makeMove(1)
+                game2.makeMove(0)
+                game2.makeMove(2)
+                game2.makeMove(1)
+                game2.makeMove(3)
+                game2.makeMove(4)
+                game2.makeMove(4)
+                game2.makeMove(0)
+                game2.makeMove(0)
+                game2.makeMove(1)
+                game2.makeMove(1)
+                print("\n\n- Test 3: Start -\nAusgangssituation: \n---------\n|.......|\n|.......|\n|XX.....|\n|OO.....|\n|OO..X..|\n|OXXXO..|\n---------" + "\nEngine (X) macht den Besten Zug, in Reihe: " + (game2.calculateBestMove() + 1) + ", da er dann nach 4 weiteren abwechselnden Zügen Gewonnen hat.\nGewonnen O: ")
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                print(""+ game2.isWin(game2.bitBoardPlayerO) + "\n- Test 3: Ende -\n")
+            }
+            if (ctx.queryParam("id")!!.toInt() == 4) {
+                var game2 = GameEngine(game.winHashMap)
+                game2.makeMove(0)
+                game2.makeMove(6)
+                game2.makeMove(0)
+                game2.makeMove(5)
+                game2.makeMove(1)
+                game2.makeMove(3)
+                print(
+                    "\n\n- Test 4: Start -\nAusgangssituation: \n---------\n|.......|\n|.......|\n|.......|\n|.......|\n|O......|\n|OO.X.XX|\n---------" + "\nEngine (O) macht den Besten Zug, in Reihe: " + (game2.calculateBestMove() + 1) + ", da er dann den Gegner am gewinnen gehindert hat, nach 1 weiteren Zug.\nGewonnen X: ")
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                print("" + game2.isWin(game2.bitBoardPlayerX) + "\n- Test 4: Ende -\n")
+            }
+            if (ctx.queryParam("id")!!.toInt() == 5) {
+                var game2 = GameEngine(game.winHashMap)
+                game2.makeMove(3)
+                game2.makeMove(0)
+                game2.makeMove(3)
+                game2.makeMove(1)
+                game2.makeMove(0)
+                game2.makeMove(2)
+                game2.makeMove(1)
+                game2.makeMove(2)
+                game2.makeMove(1)
+                game2.makeMove(2)
+                game2.makeMove(2)
+                print("\n\n- Test 5: Start -\nAusgangssituation: \n---------\n|.......|\n|.......|\n|..O....|\n|.OX....|\n|OOXO...|\n|XXXO...|\n---------" + "\nEngine (O) macht den Besten Zug, in Reihe: " + (game2.calculateBestMove() + 1) + ", da er dann den Gegner am gewinnen gehindert hat, nach 3 weiteren Zügen.\nGewonnen X: ")
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                game2.makeMove(game2.calculateBestMove())
+                print(""+ game2.isWin(game2.bitBoardPlayerX) + "\n- Test 5: Ende -\n")
+            }
         }
     }
 }

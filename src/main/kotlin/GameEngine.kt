@@ -10,11 +10,12 @@ class GameEngine {
     var bitBoardPlayerO: Long = 0L
     var height: IntArray = intArrayOf(0, 7, 14, 21, 28, 35, 42)
     var heightCounter: IntArray = intArrayOf(0, 0, 0, 0, 0, 0, 0)
-    var winHashMap = HashMap<Int, Int>()
+    var winHashMap = HashMap<String, Pair<Int, Int>>()
+    var favTiefe = 10
 
     constructor()
 
-    constructor(winHashMap: HashMap<Int, Int>){
+    constructor(winHashMap: HashMap<String, Pair<Int, Int>>) {
         this.winHashMap = winHashMap
     }
 
@@ -36,48 +37,99 @@ class GameEngine {
         this.heightCounter = heightCounter
     }
 
+    constructor(
+        savedMove: Int,
+        savedMove2: Int,
+        counter: Int,
+        bitBoardPlayerX: Long,
+        bitBoardPlayerO: Long,
+        height: IntArray,
+        heightCounter: IntArray,
+        winHashMap: HashMap<String, Pair<Int, Int>>,
+        favTiefe: Int
+    ) {
+        this.savedMove = savedMove
+        this.savedMove2 = savedMove2
+        this.counter = counter
+        this.bitBoardPlayerX = bitBoardPlayerX
+        this.bitBoardPlayerO = bitBoardPlayerO
+        this.height = height
+        this.heightCounter = heightCounter
+        this.winHashMap = winHashMap
+        this.favTiefe = favTiefe
+    }
 
-    fun calculateBestMoveLight(): Int {
+    fun calculateBestMove(): Int {
         savedMove = -1
-            max(10, Int.MIN_VALUE, Int.MAX_VALUE)
-            max(10, Int.MIN_VALUE, Int.MAX_VALUE)
+        var key = ("$bitBoardPlayerO:$bitBoardPlayerX")
+        if (winHashMap.containsKey(key) && winHashMap[key]!!.second >= counter) {
+            savedMove = winHashMap[key]!!.first
+            //print("\n Hashmap = $savedMove")
+        }
+        if (savedMove == -1) {
+            max(favTiefe, Int.MIN_VALUE, Int.MAX_VALUE)
+            //print("\n Minimax = $savedMove")
+        }
         if (savedMove == -1) {
             savedMove = monteCarlo()
-            winHashMap[("$bitBoardPlayerO,$bitBoardPlayerX").hashCode()] = savedMove
+            //print("\n Monte = $savedMove")
         }
         return savedMove
     }
 
-    fun calculateBestMoveMedium(): Int {
-        savedMove = -1
-        var key = ("$bitBoardPlayerO,$bitBoardPlayerX").hashCode()
-        if (winHashMap.containsKey(key)) {
-            savedMove = winHashMap[key]!!
-            print("\n Hashmap = $savedMove")
+    fun generateHashmap() {
+        for (i in 0..5) {
+            print("\n Hashmap = ${winHashMap.size}")
+            print("\n Spiel I = $i")
+            var temp = 0
+            while (!isWin(bitBoardPlayerO) && !isWin(bitBoardPlayerX) && counter != 42) {
+                makeMove(calculateBestMove())
+                makeMove(generatePossibleMoves().shuffled()[0])
+                temp += 2
+            }
+            for (i in 1..temp)
+                removeMove()
         }
-        if (savedMove == -1) {
-                max(10, Int.MIN_VALUE, Int.MAX_VALUE)
-            print("\n Minimax = $savedMove")
+        for (i in 0..5) {
+            print("\n Hashmap = ${winHashMap.size}")
+            print("\n Spiel II = $i")
+            var temp = 0
+            while (!isWin(bitBoardPlayerO) && !isWin(bitBoardPlayerX) && counter != 42) {
+                makeMove(generatePossibleMoves().shuffled()[0])
+                makeMove(calculateBestMove())
+                temp += 2
+            }
+            for (i in 1..temp)
+                removeMove()
         }
-        if (savedMove == -1) {
-            savedMove = monteCarlo()
-            print("\n Monte = $savedMove")
+        for (i in 0..5) {
+            print("\n Hashmap = ${winHashMap.size}")
+            print("\n Spiel III = $i")
+            var temp = 0
+            while (!isWin(bitBoardPlayerO) && !isWin(bitBoardPlayerX) && counter != 42) {
+                makeMove(calculateBestMove())
+                temp += 1
+            }
+            for (i in 1..temp)
+                removeMove()
         }
-        return savedMove
+        saveHashmap()
     }
 
-    fun calculateBestMoveHard(): Int {
-        savedMove = 0
-        return savedMove
+    fun giveHashmap() {
+        var temp = ArrayList<String>()
+        File("data.txt").forEachLine { temp.add(it) }
+        for (i in temp.indices) {
+            val elements = temp[i].split(",")
+            val key = elements[0]
+            winHashMap[key] = Pair(elements[1].trim().toInt(), elements[2].trim().toInt())
+        }
     }
 
-    fun saveHashmap(){
-        while (counter !=42 && !isWin(bitBoardPlayerX) && !isWin(bitBoardPlayerO))
-            makeMove(calculateBestMoveLight())
-        print(winHashMap.size)
+    fun saveHashmap() {
         File("data.txt").printWriter().use { out ->
             winHashMap.forEach {
-                out.println("${it.key}, ${it.value}")
+                out.println("${it.key}, ${it.value.first}, ${it.value.second}")
             }
         }
     }
@@ -173,6 +225,12 @@ class GameEngine {
         this.previouseMove.removeAt(previouseMove.size - 1)
     }
 
+    fun mirrorBitboard(bitboard: Long): Long{
+        var arr = longArrayOf(0b0000000_0000000_0000000_0000000_0000000_0000000_0111111L, 0b0000000_0000000_0000000_0000000_0000000_0111111_0000000L, 0b0000000_0000000_0000000_0000000_0111111_0000000_0000000L, 0b0000000_0000000_0000000_0111111_0000000_0000000_0000000L, 0b0000000_0000000_0111111_0000000_0000000_0000000_0000000L, 0b0000000_0111111_0000000_0000000_0000000_0000000_0000000L, 0b0111111_0000000_0000000_0000000_0000000_0000000_0000000L)
+        val bitboardMirror = ((arr[0] and bitboard)shl(42)) xor ((arr[1] and bitboard)shl(28)) xor ((arr[2] and bitboard)shl(14)) xor (arr[3] and bitboard) xor ((arr[4] and bitboard)shr(14)) xor ((arr[5] and bitboard)shr(28)) xor ((arr[6] and bitboard)shr(42))
+        return bitboardMirror
+    }
+
     fun isWin(bitboard: Long): Boolean {
         val directions = intArrayOf(1, 7, 6, 8)
         for (direction in directions) if (bitboard and (bitboard shr direction) and (bitboard shr (2 * direction)) and (bitboard shr (3 * direction)) != 0L)
@@ -202,20 +260,22 @@ class GameEngine {
             return -1
         var maxWert = alpha
         var firstValue = Int.MIN_VALUE
-        val possibleMoves = generatePossibleMoves()
+        val possibleMoves = generatePossibleMoves().shuffled()
         for (i in possibleMoves.indices) {
             makeMove(possibleMoves[i])
             var wert = min(tiefe - 1, maxWert, beta)
             removeMove()
             if (wert > maxWert) {
                 maxWert = wert
-                if (tiefe == 10 && wert >= 1 && wert >= firstValue) {
+                if (tiefe == favTiefe && wert >= 1) {
                     savedMove = possibleMoves[i]
-                    firstValue = wert
+                    winHashMap[("$bitBoardPlayerO:$bitBoardPlayerX")] = Pair(possibleMoves[i], counter + tiefe)
+                    winHashMap[("${mirrorBitboard(bitBoardPlayerO)}:${mirrorBitboard(bitBoardPlayerX)}")] = Pair(possibleMoves[i], counter + tiefe)
                 }
-                if (wert in 1..firstValue) {
+                if (wert >= 1 && wert >= firstValue) {
                     firstValue = wert
-                    winHashMap[("$bitBoardPlayerO,$bitBoardPlayerX").hashCode()] = possibleMoves[i]
+                    winHashMap[("$bitBoardPlayerO:$bitBoardPlayerX")] = Pair(possibleMoves[i], counter + tiefe)
+                    winHashMap[("${mirrorBitboard(bitBoardPlayerO)}:${mirrorBitboard(bitBoardPlayerX)}")] = Pair(possibleMoves[i], counter + tiefe)
                 }
                 if (maxWert >= beta)
                     break
@@ -230,7 +290,7 @@ class GameEngine {
         if (isWin(giveBitboardPlayer(!givePlayer())))
             return 1 + tiefe
         var minWert = beta
-        val possibleMoves = generatePossibleMoves()
+        val possibleMoves = generatePossibleMoves().shuffled()
         for (i in possibleMoves.indices) {
             makeMove(possibleMoves[i])
             val wert = max(tiefe - 1, alpha, minWert)
