@@ -6,6 +6,7 @@ function drop(x) {
     http.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             document.getElementById(this.responseText.split(",")[0]).style.backgroundColor = this.responseText.split(",")[1];
+            info()
         }
     }
 }
@@ -16,7 +17,8 @@ function computerTurn() {
     http.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             document.getElementById(this.responseText.split(",")[0]).style.backgroundColor = this.responseText.split(",")[1];
-            document.getElementById("time").innerText = "Time is: " + this.responseText.split(",")[2] + " ms";
+            document.getElementById("time").innerText = "Zeit ist: " + this.responseText.split(",")[2] + " ms";
+            info()
         }
     }
 }
@@ -27,6 +29,7 @@ function undoTurn() {
     http.onreadystatechange = function () {
         if (this.readyState == 4 && this.status == 200) {
             document.getElementById(this.responseText).style.backgroundColor = "#eee169";
+            info()
         }
     }
 }
@@ -46,6 +49,18 @@ function clearAll() {
                     continue
                 document.getElementById(i.toString()).style.backgroundColor = "#eee169";
             }
+            info()
+        }
+    }
+}
+
+function info() {
+    http.open('GET', 'info?');
+    http.send();
+    http.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("player").innerText = "Player ist dran: " + this.responseText.split(",")[0];
+            document.getElementById("win").innerText = "Gewonnen hat: " + this.responseText.split(",")[1];
         }
     }
 }
