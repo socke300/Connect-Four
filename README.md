@@ -1,14 +1,6 @@
 # Vier Gewinnt (PiS, SoSe 2020) 
 
-Autor: Marcel Gode, 5277676
-
-Ich habe die Zulassung für PiS im SoSe 2020 bei Herrn Herzberg erhalten.
-
-## Inhaltsverzeichnis 
-
-[TOC]
-
-
+Autor: socke300
 
 ## 1. Einleitung
 
